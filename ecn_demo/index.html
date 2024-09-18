@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECN Control</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+        }
+        button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+        }
+        #list {
+            background-color: #0c81d0;
+        }
+        #enable {
+            background-color: #4CAF50;
+        }
+        #disable {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ECN Control</h1>
+        <form action="/list-nodes" method="GET">
+            <button id="list">List all the ECN</button>
+        </form>
+        <form action="/start-compute" method="POST">
+            <button id="enable">ECN Enable</button>
+        </form>
+        <form action="/stop-computes" method="DELETE">
+            <button id="disable">ECN Disable</button>
+        </form>
+    </div>
+</body>
+</html>
+
+    <p id="error-message" style="color:red;"></p>
+
+    <script>
+        // Function to handle DELETE request since forms don't support DELETE method directly
+        function sendDeleteRequest() {
+            fetch('/stop-computes', {
+                method: 'DELETE'
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => {
+                document.getElementById('error-message').innerText = "Error: " + error.message;
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
