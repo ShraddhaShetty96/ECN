@@ -1,21 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECN Control</title>
     <style>
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            /* Enable horizontal scrolling */
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 18px;
+            text-align: left;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+            min-width: 600px;
+            /* Minimum width for smaller screens */
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+        }
+
+        th {
+            background-color: #009879;
+            color: #ffffff;
+            text-align: left;
+        }
+
+        tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+        tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+
+        tr:last-of-type {
+            border-bottom: 2px solid #009879;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 16px;
+                /* Reduce font size for smaller screens */
+            }
+
+            th,
+            td {
+                padding: 10px 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            table {
+                font-size: 14px;
+                /* Further reduce font size for mobile */
+            }
+
+            th,
+            td {
+                padding: 8px 5px;
+            }
+        }
+
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
+
         .container {
             text-align: center;
+            width: 100%;
+            display:block;
+            min-width: 100%;
         }
+
         button {
             margin: 10px;
             padding: 15px 30px;
@@ -25,48 +97,227 @@
             border-radius: 5px;
             color: white;
         }
+
         #list {
             background-color: #0c81d0;
         }
+
         #enable {
             background-color: #4CAF50;
         }
+
         #disable {
             background-color: #f44336;
         }
     </style>
 </head>
+
 <body>
+
     <div class="container">
+
         <h1>ECN Control</h1>
-        <form action="/list-nodes" method="GET">
+        <!--  <form action="/list-nodes" method="GET">
             <button id="list">List all the ECN</button>
         </form>
         <form action="/start-compute" method="POST">
             <button id="enable">ECN Enable</button>
         </form>
-        <form action="/stop-computes" method="DELETE">
+        <form action="/stop-computes" method="POST">
             <button id="disable">ECN Disable</button>
+        </form> -->
+        <form>
+            <button id="list" onclick="getListRequest()">List all the ECN</button>
+            <button id="enable" onclick="sendProvisionRequest()">ECN Enable</button>
+            <button id="disable" onclick="sendDeleteRequest()">ECN Disable</button>
+            <p id="error-message" style="color:red;"></p>
+            <p id="success-message" style="color:green;"></p>
+
         </form>
     </div>
+    <div id="table-container" class="table-container">
+
+    </div>
+
 </body>
+
 </html>
 
-    <p id="error-message" style="color:red;"></p>
+<script>
+    function getListRequest() {
+        event.preventDefault();
+        fetch('/list-nodes', {
+                method: 'GET',
 
-    <script>
-        // Function to handle DELETE request since forms don't support DELETE method directly
-        function sendDeleteRequest() {
-            fetch('/stop-computes', {
-                method: 'DELETE'
             })
-            .then(response => response.text())
-            .then(data => alert(data))
+            .then(response => {
+                // Check if the response status is not OK (e.g., 400 or 500)
+                if (!response.ok) {
+                    // Convert the error response to JSON and throw it
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Unknown error occurred');
+                    });
+                } else {
+                    return response.json()
+                }
+                // If the response is OK, parse it as JSONreturn response.json();
+            })
+            .then(data => {
+                console.log(data);
+                document.getElementById('success-message').innerText = "Success: " + data.message;
+                setTimeout(() => {
+                    document.getElementById('success-message').innerText = "";
+                }, 5000);
+                generateTable(data.result.data)
+
+            })
             .catch(error => {
                 document.getElementById('error-message').innerText = "Error: " + error.message;
+                setTimeout(() => {
+                    document.getElementById('error-message').innerText = "";
+                }, 5000);
                 console.error('Error:', error);
             });
+    }
+
+    function sendProvisionRequest() {
+        event.preventDefault();
+        fetch('/start-compute', {
+                method: 'POST',
+                headers: {
+                    'Content-Length': "109"
+                },
+                body: JSON.stringify({
+                    compute: "compute01"
+                })
+            })
+            .then(response => {
+                // Check if the response status is not OK (e.g., 400 or 500)
+                if (!response.ok) {
+                    // Convert the error response to JSON and throw it
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Unknown error occurred');
+                    });
+                } else {
+                    return response.json()
+                }
+                // If the response is OK, parse it as JSONreturn response.json();
+            })
+            .then(data => {
+                console.log(data);
+                document.getElementById('success-message').innerText = "Success: " + data.message;
+                setTimeout(() => {
+                    document.getElementById('success-message').innerText = "";
+                }, 5000);
+
+            })
+            .catch(error => {
+                document.getElementById('error-message').innerText = "Error: " + error.message;
+                setTimeout(() => {
+                    document.getElementById('error-message').innerText = "";
+                }, 5000);
+                console.error('Error:', error);
+            });
+    }
+    // Function to handle DELETE request since forms don't support DELETE method directly
+
+    function sendDeleteRequest() {
+        event.preventDefault();
+        fetch('/stop-computes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    compute: "compute01"
+                })
+            })
+            .then(response => {
+                // Check if the response status is not OK (e.g., 400 or 500)
+                if (!response.ok) {
+                    // Convert the error response to JSON and throw it
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Unknown error occurred');
+                    });
+                } else {
+                    return response.json()
+                }
+                // If the response is OK, parse it as JSONreturn response.json();
+            })
+            .then(data => {
+                console.log(data);
+                document.getElementById('success-message').innerText = "Success: " + data.message;
+                setTimeout(() => {
+                    document.getElementById('success-message').innerText = "";
+                }, 5000);
+
+            })
+            .catch(error => {
+                document.getElementById('error-message').innerText = "Error: " + error.message;
+                setTimeout(() => {
+                    document.getElementById('error-message').innerText = "";
+                }, 5000);
+                console.error('Error:', error);
+            });
+    }
+
+    function generateTable(jsonData) {
+
+        const flattenedData = jsonData.map(item => flattenObject(item));
+        // Get the container where the table will be displayed
+        const tableContainer = document.getElementById('table-container');
+
+        // Create table and table elements
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        // Get keys from JSON data (for table headers)
+        const keys = Object.keys(flattenedData[0]);
+
+        // Create the table header row
+        const headerRow = document.createElement('tr');
+        keys.forEach(key => {
+            const th = document.createElement('th');
+            th.textContent = key.charAt(0).toUpperCase() + key.slice(1); // Capitalize header names
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+
+        // Create table body rows
+        flattenedData.forEach(item => {
+            const row = document.createElement('tr');
+            keys.forEach(key => {
+                const td = document.createElement('td');
+                td.textContent = item[key];
+                row.appendChild(td);
+            });
+            tbody.appendChild(row);
+        });
+
+        // Append thead and tbody to the table
+        table.appendChild(thead);
+        table.appendChild(tbody);
+
+        // Clear the container and append the table to it
+        tableContainer.innerHTML = '';
+        tableContainer.appendChild(table);
+    }
+
+    function flattenObject(obj, parent = '', res = {}) {
+        for (let key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                const propName = parent ? `${parent}.${key}` : key;
+                if (typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+                    flattenObject(obj[key], propName, res);
+                } else {
+                    res[propName] = obj[key];
+                }
+            }
         }
-    </script>
+        return res;
+    }
+</script>
 </body>
+
 </html>
